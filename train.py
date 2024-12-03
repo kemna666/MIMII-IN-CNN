@@ -22,7 +22,7 @@ num_epochs = 100
 for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
-        for data in train_loader:  # 假设你已经有了一个DataLoader
+        for data in train_loader:  
             inputs, labels = data
             optimizer.zero_grad()
             outputs = model(inputs)
