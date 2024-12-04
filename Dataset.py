@@ -1,31 +1,31 @@
-import torch 
-from torch.utils.data import Dataset,DataLoader
-#使用librosa提取特征
-import librosa
+import torch
+from torch.utils.data import Dataset
 import numpy as np
+import pickle
 
-#加载音频文件
-path = './data'
-audio,sr = librosa.load(path,sr=16000)
-
-def features_exteract():
-    #提取梅尔频率倒谱系数(mfcc特征数量13个)
-    mfccs=librosa.feature.mfcc(y=audio, sr=sr,n_mfcc=13)
-    #取平均值（mfccs的转置axis=0对列求平均值，返回1*n矩阵）
-    return np.mean(mfccs.T,axis=0)
-
-#定义Dataset和DataLoader
-class MIMIIDataset(Dataset):
-    def __init__(self,files,labels):
-        super().__init__(self,files,labels)
-        self.files = files
-        self.labels = labels
+class MIMIIDataset(Dataset):    
+    def __init__(self, pkl_file_path):
+        # 加载.pkl文件中的数据
+        with open(pkl_file_path, 'rb') as file:
+            self.data = pickle.load(file)
+        self.merged_data =[]
+        for snr_data in self.data:
+            self.merged_data.extend(snr_data)
     
     def __len__(self):
-        return len(self.files)
+        # 返回数据集中样本的总数
+        return len(self.merged_data)
     
-    def __getitem__(self,idx):
-        audio = torch.load(self.files[idx])
-        features = features_exteract(audio)
-        label = self.labels[idx]
-        return torch.tensor(features),torch.tensor(label)
+    def __getitem__(self, idx):
+        # 根据索引idx返回一个样本的特征和标签
+        mfcc_features = self.merged_data[idx][0]
+        device_index = self.merged_data[idx][1]
+        label_index =   self.merged_data[idx][2]
+        # 将MFCC特征转换为Tensor
+        mfcc_features = torch.tensor(mfcc_features, dtype=torch.float32)
+        
+        # 将设备和标签索引转换为Tensor
+        device_index = torch.tensor(device_index, dtype=torch.long)
+        label_index = torch.tensor(label_index, dtype=torch.long)
+        
+        return mfcc_features, device_index, label_index
