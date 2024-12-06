@@ -39,18 +39,22 @@ class Generator(TransAudio):
     #利用随机噪声生成假数据
     def forward(self,z):
         x=self.input_layer(z)
+        print("Generator input layer output shape:", x.shape)
         output = self.transformer_encoder(x)
+        
         audio = self.output_layer(output)
+        print("Generator transformer encoder output shape:", output.shape)
+        print("Generator final output shape:", audio.shape)
         return audio
 #定义判别器
 class Discriminator(TransAudio):
     def __init__(self,input_dim,heads_num,dim_feedforward,num_layers,num_classes):
         super().__init__(input_dim,heads_num,dim_feedforward,num_layers,num_classes)
         #输出层输出是否为真，故输出维度为1
-        self.audio_output_layer = nn.Linear(256, 1)
-        self.device_output_layer = nn.Linear(256, 1)  
-        self.label_output_layer = nn.Linear(256, 1)  
-    
+        self.audio_output_layer = nn.Linear(256, 4)
+        self.device_output_layer = nn.Linear(256, 4)  
+        self.label_output_layer = nn.Linear(256, 4)  
+
     def forward(self,x):
         x=self.input_layer(x)
         output = self.transformer_encoder(x)
@@ -90,6 +94,7 @@ class TransGAN(nn.Module):
         optimizer_generator.step()
         #训练判别器
         self.discriminator.zero_grad()
+        print("Discriminator input shape:", real_audio.shape)
         real_discriminator, real_device_pred, real_label_pred = self.discriminator(real_audio)
         loss_discriminator_real_audio = criterion(real_discriminator, torch.ones_like(real_discriminator))
         loss_discriminator_real_device = criterion(real_device_pred, real_device)
