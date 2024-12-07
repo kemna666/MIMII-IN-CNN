@@ -27,7 +27,7 @@ class MIMIIDataset(Dataset):
         device_index = self.merged_data[idx][1]
         label_index =   self.merged_data[idx][2]
        # 将MFCC特征转换为Tensor
-        mfcc_features = torch.tensor(mfcc_features, dtype=torch.float32).unsqueeze(0)  # 确保形状为 (1, length)
+        mfcc_features = torch.tensor(mfcc_features, dtype=torch.float32).unsqueeze(0)
         return Data(x=mfcc_features, edge_index=label_index, y=device_index)
 
 
