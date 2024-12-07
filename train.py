@@ -4,6 +4,7 @@ import torch.optim as optim
 from torch_geometric.data import Batch
 import torch.nn as nn 
 import torch
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 #定义模型
 from torch.utils.data import Dataset
@@ -75,12 +76,13 @@ test_loader = DataLoader(test_data, batch_size=32, shuffle=False, collate_fn=col
 
 #定义训练参数
 #训练轮数
-num_epochs = 2
+num_epochs = 20
 #开始训练
 loss = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-
+train_accuracy = []
+epoch_data = []
 for epoch in range(num_epochs):
     model.train()
     train_loss = 0
@@ -91,18 +93,27 @@ for epoch in range(num_epochs):
         optimizer.zero_grad()
         output = model(data.x.to(device))
         train_loss = loss(output, data.y.to(device))
+        
+        
         train_loss.backward()
         optimizer.step()
         print(f'{epoch+1} loss={train_loss.item()}\n')
-        
-model.eval()
-with torch.no_grad():
-    correct =0
-    total = 0
-    for data in test_loader:
-        output = model(data.x.to(device))
-        _, predicted = torch.max(output.data, 1)
-        total += data.y.size(0)
-        correct += (predicted == data.y.to(device)).sum().item()
-acc = correct / total
-print(f'Accuracy: {acc:.4f}')
+        #一轮计算一次准确率
+    model.eval()
+    with torch.no_grad():
+        correct =0
+        total = 0
+        for data in test_loader:
+                output = model(data.x.to(device))
+                _, predicted = torch.max(output.data, 1)
+                total += data.y.size(0)
+                correct += (predicted == data.y.to(device)).sum().item()
+        acc = correct / total
+    print(f'Accuracy: {acc:.4f}')
+    epoch_data.append(epoch)
+    train_accuracy.append(acc)
+xpoint = epoch_data
+ypoint = train_accuracy
+plt.plot(xpoint, ypoint)
+plt.savefig('./data/train_accuracy.png')
+plt.show()
