@@ -64,7 +64,7 @@ def collate_fn(batch):
     return Batch.from_data_list(batch)
 
 
-device = torch.device("cpu")
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 model = CNN(input_dim=13,hidden_dim=128,output_dim=153,length=153).to(device)
 dataset = MIMIIDataset('./data/data.pkl')
 train_data, test_data = train_test_split(dataset, test_size=0.2, random_state=42)
@@ -75,7 +75,7 @@ test_loader = DataLoader(test_data, batch_size=32, shuffle=False, collate_fn=col
 
 #定义训练参数
 #训练轮数
-num_epochs = 10
+num_epochs = 2
 #开始训练
 loss = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -89,8 +89,8 @@ for epoch in range(num_epochs):
         data = data.to(device)
 
         optimizer.zero_grad()
-        output = model(data.x)
-        train_loss = loss(output, data.y)
+        output = model(data.x.to(device))
+        train_loss = loss(output, data.y.to(device))
         train_loss.backward()
         optimizer.step()
         print(f'{epoch+1} loss={train_loss.item()}\n')
@@ -100,9 +100,9 @@ with torch.no_grad():
     correct =0
     total = 0
     for data in test_loader:
-        output = model(data.x)
+        output = model(data.x.to(device))
         _, predicted = torch.max(output.data, 1)
         total += data.y.size(0)
-        correct += (predicted == data.y).sum().item()
+        correct += (predicted == data.y.to(device)).sum().item()
 acc = correct / total
 print(f'Accuracy: {acc:.4f}')
